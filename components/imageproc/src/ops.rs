@@ -20,6 +20,8 @@ pub enum ResizeOperation {
     /// The part of the image that doesn't fit in the thumbnail due to differing
     /// aspect ratio will be cropped away, if any.
     Fill(u32, u32),
+    /// Grayscale
+    Gray(u32, u32),
 }
 
 impl ResizeOperation {
@@ -28,6 +30,9 @@ impl ResizeOperation {
 
         // Validate args:
         match op {
+            "gray" => {
+                
+            }
             "fit_width" => {
                 if width.is_none() {
                     return Err(anyhow!("op=\"fit_width\" requires a `width` argument"));
@@ -47,6 +52,7 @@ impl ResizeOperation {
         };
 
         Ok(match op {
+            "gray" => Gray(width.unwrap(), height.unwrap()),
             "scale" => Scale(width.unwrap(), height.unwrap()),
             "fit_width" => FitWidth(width.unwrap()),
             "fit_height" => FitHeight(height.unwrap()),
@@ -64,6 +70,7 @@ impl ResizeOperation {
 pub struct ResizeInstructions {
     pub crop_instruction: Option<(u32, u32, u32, u32)>, // x, y, w, h
     pub resize_instruction: Option<(u32, u32)>,         // w, h
+    pub gray_instruction: Option<(u32, u32)>,           // 2 args for compatibility
 }
 
 impl ResizeInstructions {
@@ -126,6 +133,9 @@ impl ResizeInstructions {
                     res.crop((offset_w, offset_h, crop_w, crop_h)).resize((w, h))
                 }
             }
+            Gray(w, h) => {
+                res.gray((w, h))
+            }
         }
     }
 
@@ -136,6 +146,11 @@ impl ResizeInstructions {
 
     pub fn resize(mut self, size: (u32, u32)) -> Self {
         self.resize_instruction = Some(size);
+        self
+    }
+
+    pub fn gray(mut self, size: (u32, u32)) -> Self {
+        self.gray_instruction = Some(size);
         self
     }
 }
